@@ -1,3 +1,8 @@
+## 1.1.1
+
+- Improved iOS logging implementation
+- Replaced print statements with debugPrint in Dart code
+
 ## 1.1.0
 
 - Updated minimum iOS deployment target to 14.0.
