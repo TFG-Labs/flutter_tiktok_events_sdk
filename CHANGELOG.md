@@ -1,9 +1,14 @@
-## 1.2.0
+## 1.1.2
 
 - Added `isAlreadyInitialized()` method to check if the TikTok SDK has been initialized.
 - Improved `initSdk()` to automatically skip re-initialization during hot restarts.
 - Replaced print statements with debugPrint for improved logging consistency across the SDK.
 - Refactored and streamlined code structure in TikTok SDK handlers for better readability and maintainability.
+
+## 1.1.1
+
+- Improved iOS logging implementation
+- Replaced print statements with debugPrint in Dart code
 
 ## 1.1.0
 
