@@ -15,6 +15,7 @@ object TikTokMethodName {
     const val SEND_CUSTOM_EVENT: String = "sendCustomEvent"
     const val LOGOUT: String = "logout"
     const val START_TRACK: String = "startTrack"
+    const val IS_ALREADY_INITIALIZED: String = "isAlreadyInitialized"
 }
 
 sealed class TikTokMethod(
@@ -103,6 +104,7 @@ sealed class TikTokMethod(
                 }
 
                 TikTokBusinessSdk.initializeSdk(ttConfig)
+                setIsInitialized(true)
                 result.success("TikTok SDK initialized!")
             } catch (e: Exception) {
                 // Show detailed error in debug mode, generic error in production
@@ -227,7 +229,29 @@ sealed class TikTokMethod(
         }
     }
 
+    object IsAlreadyInitialized : TikTokMethod(type = TikTokMethodName.IS_ALREADY_INITIALIZED) {
+        override fun call(
+            context: Context,
+            call: MethodCall,
+            result: MethodChannel.Result,
+            exception: Exception?,
+        ) {
+            try {
+                result.success(isInitialized)
+            } catch (e: Exception) {
+                result.emitError("Failed to check initialization status.", e, true)
+            }
+        }
+    }
+
     companion object {
+        @Volatile
+        private var isInitialized: Boolean = false
+
+        fun setIsInitialized(value: Boolean) {
+            isInitialized = value
+        }
+
         fun getCall(type: String): TikTokMethod? =
             listOf(
                 Initialize,
@@ -235,6 +259,7 @@ sealed class TikTokMethod(
                 SendEvent,
                 Logout,
                 StartTrack,
+                IsAlreadyInitialized,
             ).firstOrNull { it.type == type }
     }
 }
