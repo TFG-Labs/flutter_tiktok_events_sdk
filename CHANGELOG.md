@@ -1,3 +1,10 @@
+## 1.2.0
+
+- Added `isAlreadyInitialized()` method to check if the TikTok SDK has been initialized.
+- Improved `initSdk()` to automatically skip re-initialization during hot restarts.
+- Replaced print statements with debugPrint for improved logging consistency across the SDK.
+- Refactored and streamlined code structure in TikTok SDK handlers for better readability and maintainability.
+
 ## 1.1.0
 
 - Updated minimum iOS deployment target to 14.0.
