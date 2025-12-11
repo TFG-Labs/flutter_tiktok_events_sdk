@@ -69,4 +69,10 @@ abstract class TiktokEventsSdkPlatform extends PlatformInterface {
       event: event,
     );
   }
+
+  /// Checks if the TikTok SDK is already initialized.
+  ///
+  /// Returns `true` if the SDK has been initialized, `false` otherwise.
+  /// This is useful for preventing re-initialization during hot restarts.
+  Future<bool> isAlreadyInitialized();
 }

@@ -19,6 +19,7 @@ class _TikTokMethod {
   final identify = 'identify';
   final sendEvent = 'sendEvent';
   final logout = 'logout';
+  final isAlreadyInitialized = 'isAlreadyInitialized';
 }
 
 /// An implementation of [TiktokEventsSdkPlatform] that uses method channels.
@@ -125,6 +126,19 @@ class MethodChannelTiktokEventsSdk extends TiktokEventsSdkPlatform {
         'Failed to log event in TikTok SDK',
         error: e,
       );
+    }
+  }
+
+  @override
+  Future<bool> isAlreadyInitialized() async {
+    try {
+      final result = await methodChannel
+          .invokeMethod<bool>(methodName.isAlreadyInitialized);
+      return result ?? false;
+    } catch (e) {
+      // If we can't determine initialization state, assume not initialized
+      log('Failed to check TikTok SDK initialization state: $e');
+      return false;
     }
   }
 }

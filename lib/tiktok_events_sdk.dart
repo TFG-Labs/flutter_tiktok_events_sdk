@@ -46,6 +46,9 @@ export 'src/sdk.dart';
 class TikTokEventsSdk {
   /// Initializes the TikTok Events SDK.
   ///
+  /// This method automatically handles hot restart scenarios by checking if
+  /// the SDK is already initialized and skipping re-initialization if so.
+  ///
   /// - [androidAppId]: The Android app ID for TikTok SDK.
   /// - [tikTokAndroidId]: The TikTok Android app ID.
   /// - [iosAppId]: The iOS app ID for TikTok SDK.
@@ -64,6 +67,11 @@ class TikTokEventsSdk {
     TikTokIosOptions iosOptions = const TikTokIosOptions(),
     TikTokLogLevel logLevel = TikTokLogLevel.info,
   }) async {
+    // Skip initialization if SDK is already initialized (handles hot restart)
+    if (await isAlreadyInitialized()) {
+      return;
+    }
+
     return TiktokEventsSdkPlatform.instance.initSdk(
       androidAppId: androidAppId,
       tikTokAndroidId: tikTokAndroidId,
@@ -108,5 +116,17 @@ class TikTokEventsSdk {
     } catch (e) {
       // Handle errors if needed
     }
+  }
+
+  /// Checks if the TikTok SDK is already initialized.
+  ///
+  /// Returns `true` if the SDK has been initialized, `false` otherwise.
+  ///
+  /// Note: You typically don't need to call this method directly as [initSdk]
+  /// automatically handles hot restart scenarios by skipping re-initialization.
+  /// This method is exposed for cases where you need to check initialization
+  /// state explicitly.
+  static Future<bool> isAlreadyInitialized() async {
+    return TiktokEventsSdkPlatform.instance.isAlreadyInitialized();
   }
 }

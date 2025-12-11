@@ -7,6 +7,24 @@ import AppTrackingTransparency
 struct InitializeHandler {
     private static let logger = OSLog(subsystem: "com.tiktok.events.sdk", category: "privacy")
 
+    /// Thread-safe initialization state tracking
+    private static let initializationQueue = DispatchQueue(label: "com.tiktok.events.sdk.initialization")
+    private static var _isInitialized: Bool = false
+
+    /// Thread-safe getter for initialization state
+    static func getIsInitialized() -> Bool {
+        return initializationQueue.sync {
+            return _isInitialized
+        }
+    }
+
+    /// Thread-safe setter for initialization state
+    static func setIsInitialized(_ value: Bool) {
+        initializationQueue.sync {
+            _isInitialized = value
+        }
+    }
+
     static func handle(call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard let args = call.arguments as? [String: Any],
               let appId = args["appId"] as? String,
@@ -65,6 +83,7 @@ struct InitializeHandler {
                     result: result
                 )
             } else {
+                setIsInitialized(true)
                 result("TikTok SDK initialized successfully!")
 
                 // Request ATT permission asynchronously after returning result
