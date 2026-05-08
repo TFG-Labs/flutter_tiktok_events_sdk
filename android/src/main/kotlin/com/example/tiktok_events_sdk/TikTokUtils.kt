@@ -165,41 +165,73 @@ object TikTokUtils {
                 value?.let { setValue(it) }
                 contentType?.let { setContentType(it) }
 
-                // Build content parameters using TTContentParams
-                val contentBuilder = TTContentParams.newBuilder()
-                var hasContentParams = false
+                // GRW-872: Prefer parameters["contents"] when callers ship multi-item
+                // line data (Purchase events do). Fall back to a single TTContentParams
+                // built from top-level fields for events that ship a single item.
+                val contentsArray = parseContentsArray(parameters)
+                if (contentsArray != null) {
+                    setContents(*contentsArray.toTypedArray())
+                } else {
+                    // Build content parameters using TTContentParams
+                    val contentBuilder = TTContentParams.newBuilder()
+                    var hasContentParams = false
 
-                // Note: We use contentBuilder.setContentId instead of eventBuilder.setContentId
-                // to keep all content-related fields together in TTContentParams
-                contentId?.let {
-                    contentBuilder.setContentId(it)
-                    hasContentParams = true
-                }
-                contentCategory?.let {
-                    contentBuilder.setContentCategory(it)
-                    hasContentParams = true
-                }
-                contentName?.let {
-                    contentBuilder.setContentName(it)
-                    hasContentParams = true
-                }
-                brand?.let {
-                    contentBuilder.setBrand(it)
-                    hasContentParams = true
-                }
-                price?.let {
-                    contentBuilder.setPrice(it.toFloat())
-                    hasContentParams = true
-                }
-                quantity?.let {
-                    contentBuilder.setQuantity(it)
-                    hasContentParams = true
-                }
+                    // Note: We use contentBuilder.setContentId instead of eventBuilder.setContentId
+                    // to keep all content-related fields together in TTContentParams
+                    contentId?.let {
+                        contentBuilder.setContentId(it)
+                        hasContentParams = true
+                    }
+                    contentCategory?.let {
+                        contentBuilder.setContentCategory(it)
+                        hasContentParams = true
+                    }
+                    contentName?.let {
+                        contentBuilder.setContentName(it)
+                        hasContentParams = true
+                    }
+                    brand?.let {
+                        contentBuilder.setBrand(it)
+                        hasContentParams = true
+                    }
+                    price?.let {
+                        contentBuilder.setPrice(it.toFloat())
+                        hasContentParams = true
+                    }
+                    quantity?.let {
+                        contentBuilder.setQuantity(it)
+                        hasContentParams = true
+                    }
 
-                if (hasContentParams) {
-                    setContents(contentBuilder.build())
+                    if (hasContentParams) {
+                        setContents(contentBuilder.build())
+                    }
                 }
             }.build() as TTContentsEvent
+    }
+
+    /**
+     * Build a TTContentParams per item in parameters["contents"].
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun parseContentsArray(parameters: Map<String, Any>): List<TTContentParams>? {
+        val rawList = parameters["contents"] as? List<Map<String, Any>> ?: return null
+        if (rawList.isEmpty()) return null
+        val items = rawList.map { dict ->
+            val builder = TTContentParams.newBuilder()
+            (dict["content_id"] as? String)?.let { builder.setContentId(it) }
+            (dict["content_category"] as? String)?.let { builder.setContentCategory(it) }
+            (dict["content_name"] as? String)?.let { builder.setContentName(it) }
+            (dict["brand"] as? String)?.let { builder.setBrand(it) }
+            ((dict["price"] as? Double) ?: (dict["price"] as? Int)?.toDouble())?.let {
+                builder.setPrice(it.toFloat())
+            }
+            ((dict["quantity"] as? Int) ?: (dict["quantity"] as? Double)?.toInt())?.let {
+                builder.setQuantity(it)
+            }
+            builder.build()
+        }
+        return items.ifEmpty { null }
     }
 
     /**
