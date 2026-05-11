@@ -165,9 +165,9 @@ object TikTokUtils {
                 value?.let { setValue(it) }
                 contentType?.let { setContentType(it) }
 
-                // GRW-872: Prefer parameters["contents"] when callers ship multi-item
-                // line data (Purchase events do). Fall back to a single TTContentParams
-                // built from top-level fields for events that ship a single item.
+                // Prefer parameters["contents"] when callers ship multi-item
+                // line data (e.g. Purchase events). Fall back to a single
+                // TTContentParams built from top-level fields for single-item events.
                 val contentsArray = parseContentsArray(parameters)
                 if (contentsArray != null) {
                     setContents(*contentsArray.toTypedArray())

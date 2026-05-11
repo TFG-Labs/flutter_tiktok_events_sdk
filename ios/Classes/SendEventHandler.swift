@@ -139,10 +139,10 @@ struct SendEventHandler {
       }
     }
 
-    // GRW-872: Prefer the contents[] array when callers ship multi-item line
-    // data (Purchase events do). Fall back to a single TikTokContentParams
+    // Prefer the contents[] array when callers ship multi-item line data
+    // (e.g. Purchase events). Fall back to a single TikTokContentParams
     // built from top-level fields for events that ship a single item
-    // (AddToCart, ViewContent).
+    // (e.g. AddToCart, ViewContent).
     if let contentsArray = parseContentsArray(from: parameters) {
       event.setContents?(contentsArray)
     } else {
