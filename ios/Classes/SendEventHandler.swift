@@ -69,6 +69,24 @@ struct SendEventHandler {
     return nil
   }
 
+  // Build TikTokContentParams per item in parameters["contents"].
+  private static func parseContentsArray(from parameters: [String: Any]) -> [TikTokContentParams]? {
+    guard let contents = parameters["contents"] as? [[String: Any]], !contents.isEmpty else {
+      return nil
+    }
+    let items: [TikTokContentParams] = contents.map { dict in
+      let params = TikTokContentParams()
+      if let id = dict["content_id"] as? String { params.contentId = id }
+      if let category = dict["content_category"] as? String { params.contentCategory = category }
+      if let name = dict["content_name"] as? String { params.contentName = name }
+      if let brand = dict["brand"] as? String { params.brand = brand }
+      if let price = extractPrice(from: dict) { params.price = price }
+      if let quantity = extractQuantity(from: dict) { params.quantity = quantity }
+      return params
+    }
+    return items.isEmpty ? nil : items
+  }
+
   // Generic helper to set the common properties on events.
   private static func configureCommonProperties<T: TikTokCommonEvent>(
     _ event: T,
@@ -121,63 +139,71 @@ struct SendEventHandler {
       }
     }
 
-    // Build content parameters using TikTokContentParams
-    let contentParams = TikTokContentParams()
-    var hasContentParams = false
+    // Prefer the contents[] array when callers ship multi-item line data
+    // (e.g. Purchase events). Fall back to a single TikTokContentParams
+    // built from top-level fields for events that ship a single item
+    // (e.g. AddToCart, ViewContent).
+    if let contentsArray = parseContentsArray(from: parameters) {
+      event.setContents?(contentsArray)
+    } else {
+      // Build content parameters using TikTokContentParams
+      let contentParams = TikTokContentParams()
+      var hasContentParams = false
 
-    // Extract content-related fields from parameters
-    if let contentId = parameters["content_id"] as? String {
-      contentParams.contentId = contentId
-      hasContentParams = true
-    }
+      // Extract content-related fields from parameters
+      if let contentId = parameters["content_id"] as? String {
+        contentParams.contentId = contentId
+        hasContentParams = true
+      }
 
-    if let contentCategory = parameters["content_category"] as? String {
-      contentParams.contentCategory = contentCategory
-      hasContentParams = true
-    }
+      if let contentCategory = parameters["content_category"] as? String {
+        contentParams.contentCategory = contentCategory
+        hasContentParams = true
+      }
 
-    if let contentName = parameters["content_name"] as? String {
-      contentParams.contentName = contentName
-      hasContentParams = true
-    }
+      if let contentName = parameters["content_name"] as? String {
+        contentParams.contentName = contentName
+        hasContentParams = true
+      }
 
-    if let brand = parameters["brand"] as? String {
-      contentParams.brand = brand
-      hasContentParams = true
-    }
+      if let brand = parameters["brand"] as? String {
+        contentParams.brand = brand
+        hasContentParams = true
+      }
 
-    if let price = extractPrice(from: parameters) {
-      contentParams.price = price
-      hasContentParams = true
-    }
+      if let price = extractPrice(from: parameters) {
+        contentParams.price = price
+        hasContentParams = true
+      }
 
-    if let quantity = extractQuantity(from: parameters) {
-      contentParams.quantity = quantity
-      hasContentParams = true
-    }
+      if let quantity = extractQuantity(from: parameters) {
+        contentParams.quantity = quantity
+        hasContentParams = true
+      }
 
-    // Set contents if we have any content parameters
-    if hasContentParams {
-      event.setContents?([contentParams])
-      // Fallback: if setContents is not available, add properties individually
-      if event.setContents == nil {
-        if let contentId = parameters["content_id"] as? String {
-          event.addProperty?(withKey: "content_id", value: contentId)
-        }
-        if let contentCategory = parameters["content_category"] as? String {
-          event.addProperty?(withKey: "content_category", value: contentCategory)
-        }
-        if let contentName = parameters["content_name"] as? String {
-          event.addProperty?(withKey: "content_name", value: contentName)
-        }
-        if let brand = parameters["brand"] as? String {
-          event.addProperty?(withKey: "brand", value: brand)
-        }
-        if let price = extractPrice(from: parameters) {
-          event.addProperty?(withKey: "price", value: price)
-        }
-        if let quantity = extractQuantity(from: parameters) {
-          event.addProperty?(withKey: "quantity", value: NSNumber(value: quantity))
+      // Set contents if we have any content parameters
+      if hasContentParams {
+        event.setContents?([contentParams])
+        // Fallback: if setContents is not available, add properties individually
+        if event.setContents == nil {
+          if let contentId = parameters["content_id"] as? String {
+            event.addProperty?(withKey: "content_id", value: contentId)
+          }
+          if let contentCategory = parameters["content_category"] as? String {
+            event.addProperty?(withKey: "content_category", value: contentCategory)
+          }
+          if let contentName = parameters["content_name"] as? String {
+            event.addProperty?(withKey: "content_name", value: contentName)
+          }
+          if let brand = parameters["brand"] as? String {
+            event.addProperty?(withKey: "brand", value: brand)
+          }
+          if let price = extractPrice(from: parameters) {
+            event.addProperty?(withKey: "price", value: price)
+          }
+          if let quantity = extractQuantity(from: parameters) {
+            event.addProperty?(withKey: "quantity", value: NSNumber(value: quantity))
+          }
         }
       }
     }
