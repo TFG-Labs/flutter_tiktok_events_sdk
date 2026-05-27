@@ -4,9 +4,9 @@ import 'package:tiktok_events_sdk/tiktok_events_sdk.dart';
 class TikTokService {
   static Future<void> init({
     required String androidAppId,
-    required String tikTokAndroidId,
+    required List<String> tikTokAndroidId,
     required String iosAppId,
-    required String tiktokIosId,
+    required List<String> tiktokIosId,
     bool isDebugMode = false,
     String? accessToken,
     TikTokLogLevel logLevel = TikTokLogLevel.info,

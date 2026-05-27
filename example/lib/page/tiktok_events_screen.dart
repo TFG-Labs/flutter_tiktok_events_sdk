@@ -620,9 +620,9 @@ class _TikTokEventsPageState extends State<TikTokEventsPage> {
       debugPrint('🔵 Calling TikTokService.init...');
       await TikTokService.init(
         androidAppId: androidAppId,
-        tikTokAndroidId: tikTokAndroidId,
+        tikTokAndroidId: [tikTokAndroidId],
         iosAppId: iosAppId,
-        tiktokIosId: tiktokIosId,
+        tiktokIosId: [tiktokIosId],
         isDebugMode: _isDebugMode,
         accessToken: accessToken.isNotEmpty ? accessToken : null,
         logLevel: logLevel,
