@@ -27,22 +27,22 @@ void main() {
   group('initSdk', () {
     test('passes a single TikTok App ID through unchanged', () async {
       await plugin.initSdk(
-        androidAppId: 'com.bash.prod',
-        tikTokAndroidId: ['7298288409704022018'],
-        iosAppId: '1624496280',
-        tiktokIosId: ['7561000202402578449'],
+        androidAppId: 'com.app.id',
+        tikTokAndroidId: ['1234567890111213141'],
+        iosAppId: '1234567890',
+        tiktokIosId: ['1234567890111213141'],
       );
 
       expect(log, hasLength(1));
       expect(log.first.method, 'initialize');
-      expect(log.first.arguments['tiktokId'], '7298288409704022018');
+      expect(log.first.arguments['tiktokId'], '1234567890111213141');
     });
 
     test('joins multiple TikTok App IDs with commas', () async {
       await plugin.initSdk(
-        androidAppId: 'com.bash.prod',
+        androidAppId: 'com.app.id',
         tikTokAndroidId: ['111', '222', '333'],
-        iosAppId: '1624496280',
+        iosAppId: '1234567890',
         tiktokIosId: ['999'],
       );
 
@@ -51,9 +51,9 @@ void main() {
 
     test('trims surrounding whitespace from each ID', () async {
       await plugin.initSdk(
-        androidAppId: 'com.bash.prod',
+        androidAppId: 'com.app.id',
         tikTokAndroidId: ['  111  ', '\t222\n', '333'],
-        iosAppId: '1624496280',
+        iosAppId: '1234567890',
         tiktokIosId: ['999'],
       );
 
@@ -62,9 +62,9 @@ void main() {
 
     test('drops empty and whitespace-only entries', () async {
       await plugin.initSdk(
-        androidAppId: 'com.bash.prod',
+        androidAppId: 'com.app.id',
         tikTokAndroidId: ['111', '', '   ', '222'],
-        iosAppId: '1624496280',
+        iosAppId: '1234567890',
         tiktokIosId: ['999'],
       );
 
@@ -74,9 +74,9 @@ void main() {
     test('throws ArgumentError when the list is empty', () async {
       await expectLater(
         plugin.initSdk(
-          androidAppId: 'com.bash.prod',
+          androidAppId: 'com.app.id',
           tikTokAndroidId: <String>[],
-          iosAppId: '1624496280',
+          iosAppId: '1234567890',
           tiktokIosId: ['999'],
         ),
         throwsA(isA<ArgumentError>()),
@@ -88,9 +88,9 @@ void main() {
         () async {
       await expectLater(
         plugin.initSdk(
-          androidAppId: 'com.bash.prod',
+          androidAppId: 'com.app.id',
           tikTokAndroidId: ['', '   ', '\t'],
-          iosAppId: '1624496280',
+          iosAppId: '1234567890',
           tiktokIosId: ['999'],
         ),
         throwsA(isA<ArgumentError>()),
