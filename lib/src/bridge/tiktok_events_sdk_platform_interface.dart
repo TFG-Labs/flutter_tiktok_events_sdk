@@ -30,9 +30,9 @@ abstract class TiktokEventsSdkPlatform extends PlatformInterface {
 
   Future<void> initSdk({
     required String androidAppId,
-    required String tikTokAndroidId,
+    required List<String> tikTokAndroidId,
     required String iosAppId,
-    required String tiktokIosId,
+    required List<String> tiktokIosId,
     bool isDebugMode = false,
     TikTokAndroidOptions androidOptions = const TikTokAndroidOptions(),
     TikTokIosOptions iosOptions = const TikTokIosOptions(),

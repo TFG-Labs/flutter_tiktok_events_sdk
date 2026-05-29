@@ -33,9 +33,9 @@ class MethodChannelTiktokEventsSdk extends TiktokEventsSdkPlatform {
   @override
   Future<void> initSdk({
     required String androidAppId,
-    required String tikTokAndroidId,
+    required List<String> tikTokAndroidId,
     required String iosAppId,
-    required String tiktokIosId,
+    required List<String> tiktokIosId,
     bool isDebugMode = false,
     TikTokAndroidOptions androidOptions = const TikTokAndroidOptions(),
     TikTokIosOptions iosOptions = const TikTokIosOptions(),
@@ -43,8 +43,19 @@ class MethodChannelTiktokEventsSdk extends TiktokEventsSdkPlatform {
   }) async {
     bool isIos = Platform.isIOS;
     final appId = isIos ? iosAppId : androidAppId;
-    final tiktokId = isIos ? tiktokIosId : tikTokAndroidId;
+    final tiktokIds = isIos ? tiktokIosId : tikTokAndroidId;
     final options = isIos ? iosOptions.toMap() : androidOptions.toMap();
+
+    final validIds =
+        tiktokIds.map((id) => id.trim()).where((id) => id.isNotEmpty).toList();
+
+    if (validIds.isEmpty) {
+      throw ArgumentError(
+        'At least one non-empty TikTok App ID is required to initialize the SDK',
+      );
+    }
+
+    final tiktokId = validIds.join(',');
 
     try {
       final result = await methodChannel.invokeMethod(methodName.initialize, {

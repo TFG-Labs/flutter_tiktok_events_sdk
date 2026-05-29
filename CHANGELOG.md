@@ -1,9 +1,15 @@
+## 1.2.0
+
+- **Multiple Ad Accounts:** initSdk now accepts a list of TikTok App IDs for both Android and iOS (previously a single string), enabling events to be shared across multiple TikTok Ad Accounts.
+- **Input Handling:** The method-channel layer trims whitespace from each TikTok App ID, drops empty entries, and joins valid IDs with a comma before passing to native (matches the TTConfig setTTAppId and TikTokConfig tiktokAppId requirements).
+- **Validation:** initSdk now throws an ArgumentError when no non-empty TikTok App ID is provided.
+
 ## 1.1.2
 
-- Added `isAlreadyInitialized()` method to check if the TikTok SDK has been initialized.
-- Improved `initSdk()` to automatically skip re-initialization during hot restarts.
-- Replaced print statements with debugPrint for improved logging consistency across the SDK.
-- Refactored and streamlined code structure in TikTok SDK handlers for better readability and maintainability.
+- **Initialization Check:** Added isAlreadyInitialized method to check if the TikTok SDK has been initialized.
+- **Hot Restart:** Improved initSdk to automatically skip re-initialization during hot restarts.
+- **Logging:** Replaced print statements with debugPrint for improved logging consistency across the SDK.
+- **Refactor:** Streamlined code structure in TikTok SDK handlers for better readability and maintainability.
 
 ## 1.1.1
 

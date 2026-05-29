@@ -50,18 +50,18 @@ class TikTokEventsSdk {
   /// the SDK is already initialized and skipping re-initialization if so.
   ///
   /// - [androidAppId]: The Android app ID for TikTok SDK.
-  /// - [tikTokAndroidId]: The TikTok Android app ID.
+  /// - [tikTokAndroidId]: The List of TikTok Android app IDs.
   /// - [iosAppId]: The iOS app ID for TikTok SDK.
-  /// - [tiktokIosId]: The TikTok iOS app ID.
+  /// - [tiktokIosId]: The List of TikTok iOS app IDs.
   /// - [isDebugMode]: Enables debug mode if `true`.
   /// - [androidOptions]: Android-specific configuration options.
   /// - [iosOptions]: iOS-specific configuration options.
   /// - [logLevel]: The log level for the SDK.
   static Future<void> initSdk({
     required String androidAppId,
-    required String tikTokAndroidId,
+    required List<String> tikTokAndroidId,
     required String iosAppId,
-    required String tiktokIosId,
+    required List<String> tiktokIosId,
     bool isDebugMode = false,
     TikTokAndroidOptions androidOptions = const TikTokAndroidOptions(),
     TikTokIosOptions iosOptions = const TikTokIosOptions(),
