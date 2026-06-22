@@ -20,6 +20,8 @@ A **Flutter** plugin that integrates the [TikTok Events SDK](https://ads.tiktok.
 
 ## Requirements
 
+> **Flutter `>=3.38.0` and Dart `^3.10.0` required.** Starting from `1.2.0` the iOS plugin is migrated to the new `UIScene` lifecycle introduced in Flutter 3.38. If you cannot upgrade Flutter yet, pin to `1.1.5`.
+
 ### Android
 
 Have to added the normal permission `com.google.android.gms.permission.AD_ID` to the SDK's AndroidManifest, to allow the SDK to collect the Android Advertising ID on apps targeting API 33.
@@ -86,6 +88,10 @@ Starting from iOS 14, App Tracking Transparency (ATT) permission is required to 
 - **Identify user**: Easily associate events with specific users through custom identifiers and parameters.
 - **Debug Mode**: Test your event tracking before releasing your app.
 - **Logout**: Effortlessly clear user identification across both Android and iOS.
+- **Runtime consent controls**: Toggle tracking on/off after init with `setTrackingEnabled` to honor GDPR/CCPA opt-in/opt-out without restarting the SDK.
+- **Manual flush**: Force-flush pending events with `flush()` before the app backgrounds or terminates.
+- **Access token rotation**: Update the access token at runtime with `updateAccessToken` — no re-initialization needed.
+- **Limited Data Use (LDU)**: Enable LDU mode at init to restrict data collection in privacy-sensitive jurisdictions.
 
 ---
 
@@ -95,7 +101,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  tiktok_events_sdk: ^0.0.1
+  tiktok_events_sdk: ^1.3.0
 ```
 
 ## Usage
@@ -114,7 +120,6 @@ final iosOptions = TikTokIosOptions(
 
 // Android options example
 final androidOptions = TikTokAndroidOptions(
-  disableAutoStart: true,
   enableAutoIapTrack: true, // enable IAP tracking
   disableAdvertiserIDCollection: false,
 );
@@ -130,6 +135,26 @@ await TikTokEventsSdk.initSdk(
   androidOptions: androidOptions,
   iosOptions: iosOptions,
 );
+```
+
+> **Important:** By default the SDK starts tracking automatically right after `initSdk`. If you set `disableAutoStart: true` on Android (for example, to wait for user consent under GDPR/LGPD), the SDK will **not** send any events until you explicitly call `TikTokEventsSdk.startTrack()`. Forgetting this call is the most common reason events never reach the TikTok dashboard.
+
+#### Deferred start (manual consent flow)
+
+Use this pattern only if you need to wait for explicit user consent before any tracking begins:
+
+```dart
+final androidOptions = TikTokAndroidOptions(
+  disableAutoStart: true, // SDK will NOT track until startTrack() is called
+);
+
+await TikTokEventsSdk.initSdk(
+  // ...same as above
+  androidOptions: androidOptions,
+);
+
+// Later, after the user grants consent:
+await TikTokEventsSdk.startTrack();
 ```
 
 ### In-App Purchase (IAP)
@@ -210,6 +235,109 @@ await TikTokEventsSdk.logEvent(
     );
 ```
 
+### Runtime Tracking Controls
+
+After the SDK is initialized, you can toggle tracking on or off at runtime — typically to honor user consent under GDPR / CCPA without having to re-initialize the SDK.
+
+```dart
+// User opts out — stop sending events.
+await TikTokEventsSdk.setTrackingEnabled(enabled: false);
+
+// User opts back in — resume tracking.
+await TikTokEventsSdk.setTrackingEnabled(enabled: true);
+
+// Read current state.
+final isEnabled = await TikTokEventsSdk.isTrackingEnabled();
+```
+
+On iOS this maps to `TikTokBusiness.setTrackingEnabled`. On Android it maps to `TikTokBusinessSdk.setSdkGlobalSwitch`.
+
+### Manual Flush
+
+Force any queued events to be sent immediately — useful before backgrounding or terminating the app:
+
+```dart
+await TikTokEventsSdk.flush();
+```
+
+Maps to `TikTokBusiness.explicitlyFlush()` on iOS and `TikTokBusinessSdk.flush()` on Android.
+
+### Update Access Token
+
+Rotate the access token without re-initializing the SDK:
+
+```dart
+await TikTokEventsSdk.updateAccessToken(accessToken: 'NEW_ACCESS_TOKEN');
+```
+
+### Advanced Initialization Options
+
+Both `TikTokAndroidOptions` and `TikTokIosOptions` expose additional native SDK knobs for fine-tuning behavior.
+
+**Cross-platform (Android + iOS):**
+
+- `disableAutoEnhancedDataPostbackEvent` — opt out of Auto Enhanced Data Postback (EDP) collection.
+- `isLowPerformanceDevice` — tell the SDK to skip non-essential background work on lower-end devices.
+
+**Android-only:**
+
+- `flushTimeIntervalSeconds` — change the flush interval (defaults to the SDK's own 15s).
+
+**iOS-only:**
+
+- `initialFlushDelaySeconds` — initial delay before the first flush.
+- `attUserAuthorizationDelaySeconds` — delay (in seconds) before the SDK requests ATT permission.
+- `customUserAgent` — custom User-Agent for SDK network requests.
+
+```dart
+final androidOptions = TikTokAndroidOptions(
+  disableAutoEnhancedDataPostbackEvent: true,
+  isLowPerformanceDevice: false,
+  flushTimeIntervalSeconds: 30,
+);
+
+final iosOptions = TikTokIosOptions(
+  disableAutoEnhancedDataPostbackEvent: true,
+  isLowPerformanceDevice: false,
+  initialFlushDelaySeconds: 5,
+  attUserAuthorizationDelaySeconds: 10,
+  customUserAgent: 'MyApp/1.0',
+);
+```
+
+### iOS-only Runtime Helpers
+
+These two helpers exist because they have no direct counterpart in the Android SDK. On Android the calls are silently no-op (or return `null`) so your shared Dart code can call them without platform branching.
+
+```dart
+// Read the device IDFA (iOS only). Returns null on Android, or on iOS when
+// the user has not granted ATT permission.
+final idfa = await TikTokEventsSdk.getIdfa();
+
+// Override the SDK's User-Agent at runtime (iOS only).
+await TikTokEventsSdk.setCustomUserAgent(userAgent: 'MyApp/1.0');
+```
+
+### Limited Data Use (LDU)
+
+For users in privacy-sensitive jurisdictions (e.g., California under CCPA, or the EU under GDPR), enable LDU at init to restrict how TikTok processes the collected data:
+
+```dart
+final androidOptions = TikTokAndroidOptions(
+  enableLimitedDataUse: true,
+);
+
+final iosOptions = TikTokIosOptions(
+  enableLDUMode: true,
+);
+
+await TikTokEventsSdk.initSdk(
+  // ...your IDs
+  androidOptions: androidOptions,
+  iosOptions: iosOptions,
+);
+```
+
 ### Logout User
 
 When a user logs out of your app, you can clear the identification data:
@@ -217,6 +345,45 @@ When a user logs out of your app, you can clear the identification data:
 ```dart
 await TikTokEventsSdk.logout();
 ```
+
+## Troubleshooting
+
+Events not showing up in the TikTok Events Manager? Before opening an issue, check the four most common causes below — they account for the vast majority of "events are not arriving" reports.
+
+### 1. You're testing on the iOS Simulator
+
+The TikTok Business SDK does **not** send events from the iOS Simulator. The simulator has no IDFA, no valid device fingerprint, and no SKAdNetwork support, so the native SDK silently drops the events.
+
+**Fix:** Always test on a physical iOS device. The Android emulator works for basic testing, but real devices are still recommended.
+
+### 2. You're looking at the wrong tab in the dashboard
+
+When you initialize the SDK with `isDebugMode: true`, events are sent to the **Test Event** tab of the TikTok Ads Manager, **not** to the **Event Activity** tab.
+
+**Fix:** In the TikTok Ads Manager, go to **Tools → Events**, open your app, and switch to the **Test event** tab (shown below). If you want events to appear in **Event Activity** instead, set `isDebugMode: false` in a release build.
+
+![TikTok Ads Manager — Test event tab](doc/images/tiktok-test-events-tab.png)
+
+### 3. Your app is still pending verification on TikTok
+
+If your app has not been verified yet on the TikTok Events platform, only **Test Events** will work. The **Event Activity** tab stays empty until verification is complete.
+
+**Fix:** Complete the app verification process in the TikTok Business Center, then test again with `isDebugMode: false` on a physical device.
+
+### 4. You set `disableAutoStart: true` but never call `startTrack()`
+
+On Android, `disableAutoStart: true` tells the native SDK to wait for explicit consent before sending anything. If you never call `TikTokEventsSdk.startTrack()` afterwards, no event will ever reach TikTok.
+
+**Fix:** Either remove `disableAutoStart: true` from your `TikTokAndroidOptions` (the SDK then starts automatically), or call `await TikTokEventsSdk.startTrack()` once the user has granted consent. See the [Deferred start](#deferred-start-manual-consent-flow) section above.
+
+### Still not working?
+
+If you've checked all four above and events are still missing:
+
+- Confirm your `androidAppId`, `tikTokAndroidId`, `iosAppId` and `tiktokIosId` match exactly what is shown in the TikTok Events Manager (no extra whitespace).
+- Set `logLevel: TikTokLogLevel.debug` and `isDebugMode: true` and look for native log lines tagged `TikTokBusinessSdk` (Android Logcat) or `TikTok` (iOS Console).
+- Make sure your network is not blocking `*.tiktokv.com` / `*.tiktokw.us` requests.
+- Open an issue with the full log output, your initialization call (with the IDs redacted), and the platform/device you are testing on.
 
 ## Contributions
 
