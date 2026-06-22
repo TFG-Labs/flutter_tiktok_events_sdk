@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  FLUTTER_VERSION: "3.38.5"
+
+jobs:
+  build:
+    name: Build package
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Plugin pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Example pub get
+        working-directory: example
+        run: flutter pub get
+
+      - name: Build Android APK (debug)
+        working-directory: example
+        run: flutter build apk --debug
+
+      - name: Build iOS via CocoaPods
+        working-directory: example
+        run: flutter build ios --simulator --no-codesign
+
+      - name: Switch example to Swift Package Manager
+        working-directory: example/ios
+        run: |
+          pod deintegrate || true
+          rm -f Podfile Podfile.lock
+          rm -rf Pods .symlinks
+
+      - name: Enable Swift Package Manager
+        run: flutter config --enable-swift-package-manager
+
+      - name: Build iOS via Swift Package Manager
+        working-directory: example
+        run: |
+          flutter clean
+          flutter pub get
+          flutter build ios --simulator --no-codesign

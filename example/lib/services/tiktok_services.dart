@@ -41,15 +41,11 @@ class TikTokService {
   }
 
   static Future<void> identify({
-    String? externalId,
+    required String externalId,
     String? externalUserName,
     String? phoneNumber,
     String? email,
   }) async {
-    if (externalId == null || externalUserName == null || email == null) {
-      throw Exception('externalId, externalUserName, and email are required');
-    }
-
     final identifier = TikTokIdentifier(
       externalId: externalId,
       externalUserName: externalUserName,
@@ -80,4 +76,20 @@ class TikTokService {
       ),
     );
   }
+
+  static Future<void> setTrackingEnabled(bool enabled) =>
+      TikTokEventsSdk.setTrackingEnabled(enabled: enabled);
+
+  static Future<bool> isTrackingEnabled() =>
+      TikTokEventsSdk.isTrackingEnabled();
+
+  static Future<void> flush() => TikTokEventsSdk.flush();
+
+  static Future<void> updateAccessToken(String accessToken) =>
+      TikTokEventsSdk.updateAccessToken(accessToken: accessToken);
+
+  static Future<String?> getIdfa() => TikTokEventsSdk.getIdfa();
+
+  static Future<void> setCustomUserAgent(String userAgent) =>
+      TikTokEventsSdk.setCustomUserAgent(userAgent: userAgent);
 }
